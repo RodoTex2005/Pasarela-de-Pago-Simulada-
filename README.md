@@ -13,13 +13,6 @@ Simulación de un e-commerce donde **Órdenes, Inventario y Pagos** son servicio
 | **Checkout** (pago con tarjeta simulada) | **Prototipo listo** |
 | Estado del pedido en tiempo real | Pendiente (el checkout ya muestra el estado simulado) |
 
-## Cómo ejecutar el prototipo con XAMPP
-
-1. Instala [XAMPP](https://www.apachefriends.org/) e inicia **Apache** desde el panel de control.
-2. Copia (o clona) esta carpeta en `C:\xampp\htdocs\pasarela-pagos` (en macOS: `/Applications/XAMPP/htdocs/`).
-3. Abre `http://localhost/pasarela-pagos/`.
-
-No requiere compilar ni instalar dependencias.
 
 **Tarjetas de prueba**
 
@@ -71,12 +64,6 @@ Frontend ──HTTP/WebSocket──> API Gateway
 - Diseño responsivo *mobile-first*, áreas táctiles de 44 px y respeto de `prefers-reduced-motion`.
 - Documentación de diseño y accesibilidad en [`docs/Documentacion_Sitio_Pasarela_Pagos.docx`](docs/Documentacion_Sitio_Pasarela_Pagos.docx).
 
-## Roadmap
-
-- [ ] **Docker:** `docker-compose.yml` con BD, backend, frontend y Redis; variables en `.env` (ver `.env.example`).
-- [ ] **Pruebas:** unitaria (Jest/Pytest), de integración con BD real y E2E con Playwright en la ruta carrito → pago → estado.
-- [ ] **Autenticación robusta:** JWT de acceso de vida corta + *Refresh Tokens* rotativos en cookie `HttpOnly` + protección **CSRF**.
-- [ ] Pantallas restantes y estado del pedido por WebSocket.
 
 ## Flujo de trabajo con Git
 
