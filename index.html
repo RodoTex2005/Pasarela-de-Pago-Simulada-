@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Checkout · Pasarela Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/styles.css">
+<script>
+  /* Aplica el tema guardado antes de pintar, para evitar parpadeo */
+  try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="top">
+  <span class="brand">Pasarela Demo</span>
+  <button type="button" id="themeBtn" class="btn btn-ghost" aria-label="Cambiar tema">Tema: sistema</button>
+</header>
+
+<main id="main" class="layout">
+  <div>
+    <h1>Finalizar compra</h1>
+    <p class="muted">Entorno de pruebas: no se realiza ningún cobro real. Usa una tarjeta de prueba.</p>
+
+    <form id="checkout" novalidate>
+      <fieldset>
+        <legend>Datos de contacto y envío</legend>
+        <div class="field">
+          <label for="name">Nombre completo</label>
+          <input id="name" name="name" type="text" autocomplete="name" required aria-describedby="name-err">
+          <p class="err" id="name-err" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-err">
+          <p class="err" id="email-err" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="address">Dirección de envío</label>
+          <input id="address" name="address" type="text" autocomplete="street-address" required aria-describedby="address-err">
+          <p class="err" id="address-err" role="alert"></p>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pago con tarjeta (simulado)</legend>
+        <div class="field">
+          <label for="card">Número de tarjeta</label>
+          <input id="card" name="card" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242" maxlength="19" required aria-describedby="card-err">
+          <p class="err" id="card-err" role="alert"></p>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="exp">Vencimiento (MM/AA)</label>
+            <input id="exp" name="exp" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="12/28" maxlength="5" required aria-describedby="exp-err">
+            <p class="err" id="exp-err" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="cvv">CVV</label>
+            <input id="cvv" name="cvv" type="text" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required aria-describedby="cvv-err">
+            <p class="err" id="cvv-err" role="alert"></p>
+          </div>
+        </div>
+        <details class="hint">
+          <summary>Tarjetas de prueba</summary>
+          <ul>
+            <li><code>4242 4242 4242 4242</code>: pago confirmado</li>
+            <li><code>4000 0000 0000 0002</code>: pago rechazado por el banco</li>
+            <li><code>4000 0000 0000 0119</code>: el banco tarda más de 2 s (el Circuit Breaker cancela)</li>
+          </ul>
+          <p>Usa cualquier fecha futura y un CVV de 3 dígitos.</p>
+        </details>
+      </fieldset>
+
+      <button type="submit" id="payBtn" class="btn btn-primary">Pagar $1,348.00 MXN</button>
+    </form>
+
+    <section class="status" aria-labelledby="st-title" id="statusBox" hidden>
+      <h2 id="st-title">Estado de tu pedido</h2>
+      <p><span class="badge" id="badge"></span> <code id="orderId"></code></p>
+      <p id="statusMsg" role="status" aria-live="polite"></p>
+      <button type="button" id="retryBtn" class="btn btn-ghost" hidden>Intentar de nuevo</button>
+    </section>
+  </div>
+
+  <aside class="summary" aria-labelledby="sum-title">
+    <h2 id="sum-title">Resumen del pedido</h2>
+    <ul class="items">
+      <li>
+        <svg role="img" aria-label="Audífonos inalámbricos negros con diadema" viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="8" fill="var(--surface-2)"/><path d="M10 28v-4a14 14 0 0 1 28 0v4" fill="none" stroke="var(--text)" stroke-width="3"/><rect x="8" y="27" width="8" height="12" rx="3" fill="var(--text)"/><rect x="32" y="27" width="8" height="12" rx="3" fill="var(--text)"/></svg>
+        <div><strong>Audífonos inalámbricos</strong><span class="muted">Cantidad: 1</span></div>
+        <span class="num">$1,199.00</span>
+      </li>
+      <li>
+        <svg role="img" aria-label="Cable USB-C trenzado enrollado" viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="8" fill="var(--surface-2)"/><circle cx="24" cy="24" r="12" fill="none" stroke="var(--text)" stroke-width="3"/><circle cx="24" cy="24" r="5" fill="none" stroke="var(--text)" stroke-width="3"/></svg>
+        <div><strong>Cable USB-C</strong><span class="muted">Cantidad: 1</span></div>
+        <span class="num">$149.00</span>
+      </li>
+    </ul>
+    <dl class="totals">
+      <div><dt>Subtotal</dt><dd class="num">$1,348.00</dd></div>
+      <div><dt>Envío</dt><dd class="num">Gratis</dd></div>
+      <div class="total"><dt>Total</dt><dd class="num">$1,348.00 MXN</dd></div>
+    </dl>
+  </aside>
+</main>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
