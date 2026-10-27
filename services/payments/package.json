@@ -1,0 +1,16 @@
+
+{
+  "name": "pasarela-payments",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Microservicio de pagos simulados",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
