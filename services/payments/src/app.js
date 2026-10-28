@@ -27,6 +27,7 @@ app.post('/', async (req, res) => {
 
     return res.status(statusCode).json(result);
   } catch (error) {
+    
     return res.status(error.statusCode || 500).json({
       error: error.statusCode ? error.message : 'Error interno al procesar el pago'
     });
@@ -44,6 +45,10 @@ app.use((error, req, res, next) => {
   return next(error);
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Payments ejecutándose en el puerto ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Payments ejecutándose en el puerto ${PORT}`);
+  });
+}
+
+module.exports = app;
