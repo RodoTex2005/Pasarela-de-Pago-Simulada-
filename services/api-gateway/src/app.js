@@ -9,7 +9,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
 
 // Verifica que el API Gateway esté funcionando.
 app.get('/health', (req, res) => {

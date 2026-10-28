@@ -1,0 +1,143 @@
+services:
+  orders-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders_user
+      POSTGRES_PASSWORD: orders_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders_user -d orders"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  inventory-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: inventory
+      MYSQL_USER: inventory_user
+      MYSQL_PASSWORD: inventory_dev_password
+      MYSQL_ROOT_PASSWORD: mysql_root_dev_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - inventory_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  payments-db:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_DATABASE: payments
+    ports:
+      - "27018:27017"
+    volumes:
+      - payments_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  inventory:
+    build:
+      context: ./services/inventory
+    environment:
+      PORT: "8000"
+      INVENTORY_DB_URL: mysql://inventory_user:inventory_dev_password@inventory-db:3306/inventory
+    ports:
+      - "8000:8000"
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+
+  payments:
+    build:
+      context: ./services/payments
+    environment:
+      NODE_ENV: development
+      PORT: "3002"
+      PAYMENTS_DB_URL: mongodb://payments-db:27017/payments
+      BROKER_URL: amqp://guest:guest@rabbitmq:5672
+      BANK_TIMEOUT_MS: "2000"
+    ports:
+      - "3002:3002"
+    depends_on:
+      payments-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  orders:
+    build:
+      context: ./services/orders
+    environment:
+      NODE_ENV: development
+      PORT: "3001"
+      ORDERS_DB_URL: postgres://orders_user:orders_dev_password@orders-db:5432/orders
+      INVENTORY_SERVICE_URL: http://inventory:8000
+      PAYMENTS_SERVICE_URL: http://payments:3002
+      BROKER_URL: amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "3001:3001"
+    depends_on:
+      orders-db:
+        condition: service_healthy
+      inventory:
+        condition: service_started
+      payments:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      ORDERS_SERVICE_URL: http://orders:3001
+      INVENTORY_SERVICE_URL: http://inventory:8000
+      PAYMENTS_SERVICE_URL: http://payments:3002
+    ports:
+      - "3000:3000"
+    depends_on:
+      - orders
+      - inventory
+      - payments
+
+volumes:
+  orders_data:
+  inventory_data:
+  payments_data:
+  redis_data:
