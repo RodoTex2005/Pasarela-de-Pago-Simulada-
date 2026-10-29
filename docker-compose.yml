@@ -89,6 +89,7 @@ services:
       PORT: "3002"
       PAYMENTS_DB_URL: mongodb://payments-db:27017/payments
       BROKER_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
       BANK_TIMEOUT_MS: "2000"
     ports:
       - "3002:3002"
@@ -96,6 +97,8 @@ services:
       payments-db:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   orders:
@@ -107,6 +110,8 @@ services:
       ORDERS_DB_URL: postgres://orders_user:orders_dev_password@orders-db:5432/orders
       INVENTORY_SERVICE_URL: http://inventory:8000
       PAYMENTS_SERVICE_URL: http://payments:3002
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-cambia-esta-clave-local-por-una-larga-y-aleatoria}
+      FRONTEND_ORIGIN: http://localhost:8080
       BROKER_URL: amqp://guest:guest@rabbitmq:5672
     ports:
       - "3001:3001"
@@ -129,12 +134,20 @@ services:
       ORDERS_SERVICE_URL: http://orders:3001
       INVENTORY_SERVICE_URL: http://inventory:8000
       PAYMENTS_SERVICE_URL: http://payments:3002
+      ORDERS_DB_URL: postgres://orders_user:orders_dev_password@orders-db:5432/orders
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-cambia-esta-clave-local-por-una-larga-y-aleatoria}
+      FRONTEND_ORIGIN: http://localhost:8080
     ports:
       - "3000:3000"
     depends_on:
-      - orders
-      - inventory
-      - payments
+      orders:
+        condition: service_started
+      inventory:
+        condition: service_started
+      payments:
+        condition: service_started
+      orders-db:
+        condition: service_healthy
 
 volumes:
   orders_data:
