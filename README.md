@@ -1,85 +1,131 @@
 # Pasarela de Pago Simulada con Microservicios
 
-Simulación de un e-commerce donde **Órdenes, Inventario y Pagos** son servicios independientes. Si el pago falla, el inventario se compensa automáticamente (**Patrón Saga**), y si el banco simulado tarda más de 2 s, un **Circuit Breaker** cancela la operación.
+Proyecto académico que simula un e-commerce con catálogo de productos, carrito de compras y un proceso de pago mediante una tarjeta bancaria de prueba. La aplicación utiliza una arquitectura de microservicios para separar las responsabilidades de órdenes, inventario y pagos.
 
-> **Estado actual (rama `dev`):** prototipo funcional de la pantalla **Checkout** (frontend estático). El backend, Docker, pruebas y autenticación están diseñados y listados en el [Roadmap](#roadmap), pero **aún no implementados**.
+> **Estado actual:** rama `dev`. El proyecto cuenta con frontend servido mediante XAMPP, API Gateway, servicios backend ejecutados con Docker Compose, catálogo conectado al inventario, carrito, Checkout y autenticación. La implementación continúa en desarrollo.
 
-## Pantallas planeadas
+## Funcionalidades implementadas
 
-| Pantalla | Estado |
+- **Catálogo de productos:** consulta productos desde el inventario a través del API Gateway.
+- **Búsqueda y ordenamiento:** permite buscar productos y ordenarlos por precio o nombre.
+- **Carrito de compras:** permite gestionar los productos seleccionados y sus cantidades.
+- **Checkout:** muestra los productos seleccionados, las cantidades, el subtotal y el total a pagar.
+- **Cálculo de precios:** el importe se calcula a partir del precio de cada producto y su cantidad. El botón de pago muestra el total acumulado, tanto para un solo producto como para varios.
+- **Autenticación:** registro e inicio de sesión con tokens JWT.
+- **Órdenes y pagos:** los servicios backend gestionan el flujo de compra y el resultado de la operación.
+- **Simulación bancaria:** contempla pagos aprobados, rechazos y tiempos de espera.
+- **Contenedores:** los servicios y sus dependencias se ejecutan mediante Docker Compose.
+
+## Tecnologías utilizadas
+
+| Tecnología | Uso |
 |---|---|
-| Catálogo de productos | Pendiente |
-| Carrito | Pendiente |
-| **Checkout** (pago con tarjeta simulada) | **Prototipo listo** |
-| Estado del pedido en tiempo real | Pendiente (el checkout ya muestra el estado simulado) |
+| HTML, CSS y JavaScript | Interfaz web |
+| XAMPP / Apache | Servir el frontend localmente |
+| Node.js | Servicios backend |
+| API Gateway | Punto de entrada para las solicitudes del frontend |
+| Docker Compose | Orquestación del entorno |
+| PostgreSQL | Persistencia de órdenes |
+| MySQL | Persistencia del inventario |
+| MongoDB | Persistencia de pagos |
+| RabbitMQ | Mensajería entre servicios |
+| Redis | Servicio de caché y sesiones |
+| JWT | Autenticación mediante tokens |
 
-## Cómo ejecutar el prototipo con XAMPP
+## Arquitectura
 
-1. Instala [XAMPP](https://www.apachefriends.org/) e inicia **Apache** desde el panel de control.
-2. Copia (o clona) esta carpeta en `C:\xampp\htdocs\pasarela-pagos` (en macOS: `/Applications/XAMPP/htdocs/`).
-3. Abre `http://localhost/pasarela-pagos/`.
+```text
+                    FRONTEND
+               HTML + CSS + JS
+                       |
+                       v
+                  API GATEWAY
+                   Puerto 3000
+                       |
+          +------------+------------+
+          |            |            |
+          v            v            v
+       ÓRDENES      INVENTARIO     PAGOS
+        :3001         :8000        :3002
+          |            |            |
+     PostgreSQL       MySQL       MongoDB
+       :5433          :3307       :27018
 
-No requiere compilar ni instalar dependencias.
-
-**Tarjetas de prueba**
-
-| Tarjeta | Resultado |
-|---|---|
-| `4242 4242 4242 4242` | Pedido CONFIRMED |
-| `4000 0000 0000 0002` | Pedido CANCELLED (rechazo del banco) |
-| `4000 0000 0000 0119` | Pedido CANCELLED (timeout > 2 s, Circuit Breaker) |
-
-Usa cualquier fecha futura y un CVV de 3 dígitos. **No se envían ni almacenan datos reales.**
-
-## Arquitectura objetivo
-
+      RabbitMQ: 5672 / panel: 15672
+      Redis: 6379
 ```
-Frontend ──HTTP/WebSocket──> API Gateway
-                                 │
-            ┌────────────────────┼────────────────────┐
-         Orders              Inventory             Payments
-        (PostgreSQL)          (MySQL)              (MongoDB)
-            └──────── eventos asíncronos (RabbitMQ) ────┘
-                    Redis: caché y sesiones
+
+Los puertos indicados corresponden a los puertos publicados en el entorno local de Docker Compose.
+
+## Estructura general
+
+```text
+Pasarela_Pago_Simulada/
+├── frontend/
+│   ├── assets/
+│   │   └── js/
+│   │       ├── app.js
+│   │       ├── store.js
+│   │       └── cart.js
+│   ├── index.html
+│   ├── store.html
+│   └── cart.html
+├── services/
+│   ├── api-gateway/
+│   ├── orders/
+│   ├── inventory/
+│   └── payments/
+├── docs/
+├── docker-compose.yml
+├── .env.example
+└── README.md
 ```
 
-## Decisiones técnicas
+*La estructura anterior es una referencia general; conserva los nombres y las carpetas reales del repositorio si difieren.*
 
-| Tecnología | Por qué se eligió |
-|---|---|
-| HTML + CSS + JavaScript sin framework (prototipo) | Corre directo en XAMPP, sin build; permite validar el diseño antes de invertir en un framework. |
-| React + TypeScript + Tailwind (fase siguiente) | Componentes reutilizables, tipado para evitar errores en estados del pedido y tokens de diseño consistentes. |
-| Microservicios con base de datos propia | Cada servicio es su propio *Bounded Context*; evita acoplamiento por base de datos compartida. |
-| RabbitMQ (o Kafka) | Comunicación asíncrona y desacoplada, necesaria para orquestar la Saga. |
-| PostgreSQL / MySQL / MongoDB | Se usa el motor adecuado por servicio: relacional para órdenes e inventario, documentos para el log de pagos. |
-| Redis | Caché y sesiones de baja latencia. |
-| Docker Compose | Levantar todo el entorno con un solo comando, reproducible en cualquier equipo. |
+## Variables de entorno
 
-## Patrones de diseño
+El archivo `.env.example` documenta la configuración necesaria para el entorno. Entre las variables contempladas se encuentran:
 
-- **Saga (coreografía):** transacción distribuida con compensaciones; si el cobro falla, se repone el stock.
-- **Circuit Breaker:** corta la llamada al banco simulado tras 2 s para no saturarlo ni bloquear al usuario. *El prototipo ya lo simula en el cliente (`Promise.race` con tiempo límite).*
-- **Domain-Driven Design:** Entidades, Value Objects y Repositorios por contexto.
-- **Event-driven architecture:** los servicios se comunican por eventos, no por llamadas directas.
-- **Design tokens (frontend):** colores y tipografía como variables CSS, lo que permite el tema claro/oscuro sin duplicar estilos.
+- `NODE_ENV`
+- `FRONTEND_URL`
+- `ORDERS_DB_URL`
+- `INVENTORY_DB_URL`
+- `PAYMENTS_DB_URL`
+- `BROKER_URL`
+- `REDIS_URL`
+- Secretos JWT
+- `BANK_TIMEOUT_MS`
 
-## Qué incluye el prototipo del Checkout
+Consulta `.env.example` para conocer los nombres y valores de referencia. Los secretos reales deben mantenerse fuera del control de versiones.
 
-- Formulario con etiquetas visibles, validación en línea, algoritmo de Luhn, autocompletado y formato asistido.
-- Estados PENDING / CONFIRMED / CANCELLED con **color + icono + texto** y región `aria-live`.
-- Tema claro / oscuro / sistema, con preferencia guardada.
-- Diseño responsivo *mobile-first*, áreas táctiles de 44 px y respeto de `prefers-reduced-motion`.
-- Documentación de diseño y accesibilidad en [`docs/Documentacion_Sitio_Pasarela_Pagos.docx`](docs/Documentacion_Sitio_Pasarela_Pagos.docx).
+## Estado del proyecto y próximos pasos
 
-## Roadmap
-
-- [ ] **Docker:** `docker-compose.yml` con BD, backend, frontend y Redis; variables en `.env` (ver `.env.example`).
-- [ ] **Pruebas:** unitaria (Jest/Pytest), de integración con BD real y E2E con Playwright en la ruta carrito → pago → estado.
-- [ ] **Autenticación robusta:** JWT de acceso de vida corta + *Refresh Tokens* rotativos en cookie `HttpOnly` + protección **CSRF**.
-- [ ] Pantallas restantes y estado del pedido por WebSocket.
+- [x] Frontend de tienda y catálogo.
+- [x] Consulta del inventario desde el frontend mediante el API Gateway.
+- [x] Búsqueda y ordenamiento de productos.
+- [x] Carrito de compras.
+- [x] Checkout con cálculo dinámico del importe.
+- [x] API Gateway y servicios desplegados con Docker Compose.
+- [x] Registro e inicio de sesión con JWT.
+- [ ] Ampliar y automatizar las pruebas unitarias, de integración y de extremo a extremo.
+- [ ] Completar y documentar el seguimiento de pedidos en tiempo real, si aún no está terminado.
+- [ ] Actualizar la documentación técnica conforme se estabilicen los servicios.
 
 ## Flujo de trabajo con Git
 
-- `main`: versión estable.
-- `dev`: desarrollo activo (rama de este prototipo).
-- Commits pequeños y descriptivos, por ejemplo: `feat(checkout): validación de tarjeta con Luhn`.
+- `main`: rama estable del proyecto.
+- `dev`: rama de desarrollo activo.
+
+Antes de realizar cambios, comprueba la rama actual:
+
+```bash
+git status
+git branch
+```
+
+Usa commits pequeños y descriptivos, por ejemplo:
+
+```bash
+git add README.md
+git commit -m "docs: actualizar README del proyecto"
