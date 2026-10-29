@@ -41,8 +41,11 @@ async function processOrderSaga({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        order_id: order.id,
-        items: order.items
+    order_id: order.id,
+    items: order.items.map((item) => ({
+      productId: item.productId || item.product_id,
+      quantity: item.quantity
+        }))
       })
     });
 
@@ -54,7 +57,7 @@ async function processOrderSaga({
       );
     }
   } catch (error) {
-    updateOrderStatus('CANCELLED');
+    await updateOrderStatus('CANCELLED');
 
     return {
       success: false,
@@ -102,7 +105,7 @@ async function processOrderSaga({
       };
     }
 
-    updateOrderStatus('CANCELLED');
+    await updateOrderStatus('CANCELLED');
 
     return {
       success: false,
@@ -141,7 +144,7 @@ async function processOrderSaga({
   }
 
   // 5. Todo salió bien: confirmar el pedido.
-  updateOrderStatus('CONFIRMED');
+  await updateOrderStatus('CONFIRMED');
 
   return {
     success: true,

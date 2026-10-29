@@ -5,48 +5,60 @@ const express = require('express');
 const { createOrder: buildOrder } = require('./domain/entities/order');
 const { processOrderSaga } = require('./application/saga/processOrderSaga');
 
-const app = express();
+const {
+  initializeDatabase,
+  createOrderRecord,
+  updateOrderStatus: saveOrderStatus,
+  getOrderById
+} = require('./infrastructure/database/orderRepository');
 
-// Almacenamiento temporal.
-// Más adelante se sustituirá por PostgreSQL.
-const orders = new Map();
+const app = express();
 
 app.use(express.json());
 
 // Comprobar que el servicio está activo.
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    service: 'orders',
-    status: 'UP'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const { pool } = require('./infrastructure/database/orderRepository');
+    await pool.query('SELECT 1');
+
+    return res.status(200).json({
+      service: 'orders',
+      status: 'UP',
+      database: 'connected'
+    });
+  } catch (error) {
+    return res.status(503).json({
+      service: 'orders',
+      status: 'DOWN',
+      database: 'disconnected'
+    });
+  }
 });
 
-// Crear y validar un pedido.
-
-function createOrder(req, res) {
+// Crear un pedido en PostgreSQL.
+async function createOrder(req, res) {
   try {
     const order = buildOrder(req.body);
-
-    orders.set(order.id, order);
-
-    return order;
+    return await createOrderRecord(order);
   } catch (error) {
-    res.status(400).json({
-      error: error.message
-    });
+    if (error.message?.includes('Se requiere') ||
+        error.message?.includes('El pedido')) {
+      res.status(400).json({ error: error.message });
+      return null;
+    }
 
+    console.error('[Orders] Error al guardar el pedido:', error.message);
+    res.status(500).json({ error: 'No se pudo guardar el pedido.' });
     return null;
   }
 }
 
-
 // Crear un pedido sin iniciar el pago.
-app.post('/', (req, res) => {
-  const order = createOrder(req, res);
+app.post('/', async (req, res) => {
+  const order = await createOrder(req, res);
 
-  if (!order) {
-    return;
-  }
+  if (!order) return;
 
   return res.status(201).json({
     message: 'Pedido creado correctamente',
@@ -57,39 +69,43 @@ app.post('/', (req, res) => {
 // Ejecutar la Saga: inventario -> pago -> confirmación.
 app.post('/checkout', async (req, res) => {
   const { cardNumber } = req.body;
-  const order = createOrder(req, res);
+  const order = await createOrder(req, res);
 
-  if (!order) {
-    return;
-  }
+  if (!order) return;
 
   if (typeof cardNumber !== 'string' || !/^\d{16}$/.test(cardNumber)) {
-    order.status = 'CANCELLED';
-    order.updatedAt = new Date().toISOString();
+    try {
+      const cancelledOrder = await saveOrderStatus(order.id, 'CANCELLED');
 
-    return res.status(400).json({
-      message: 'Pedido cancelado: se requiere una tarjeta de prueba de 16 dígitos.',
-      order
-    });
+      return res.status(400).json({
+        message: 'Pedido cancelado: se requiere una tarjeta de prueba de 16 dígitos.',
+        order: cancelledOrder
+      });
+    } catch (error) {
+      console.error('[Orders] Error al cancelar el pedido:', error.message);
+      return res.status(500).json({
+        message: 'No se pudo actualizar el estado del pedido.'
+      });
+    }
   }
+
+  // La función se usa desde la Saga para persistir cada cambio de estado.
+  const persistOrderStatus = async (status) => {
+    const updatedOrder = await saveOrderStatus(order.id, status);
+    Object.assign(order, updatedOrder);
+  };
 
   try {
     const result = await processOrderSaga({
       order,
       cardNumber,
-      updateOrderStatus: (status) => {
-        order.status = status;
-        order.updatedAt = new Date().toISOString();
-        orders.set(order.id, order);
-      }
+      updateOrderStatus: persistOrderStatus
     });
 
     if (result.success) {
       return res.status(200).json(result);
     }
 
-    // Si no se pudo completar una compensación o confirmar
-    // el inventario, informamos que requiere atención.
     if (
       result.stage === 'INVENTORY_RELEASE' ||
       result.stage === 'INVENTORY_CONFIRMATION'
@@ -109,16 +125,24 @@ app.post('/checkout', async (req, res) => {
 });
 
 // Consultar un pedido por ID.
-app.get('/:id', (req, res) => {
-  const order = orders.get(req.params.id);
+app.get('/:id', async (req, res) => {
+  try {
+    const order = await getOrderById(req.params.id);
 
-  if (!order) {
-    return res.status(404).json({
-      error: 'Pedido no encontrado'
+    if (!order) {
+      return res.status(404).json({
+        error: 'Pedido no encontrado'
+      });
+    }
+
+    return res.status(200).json({ order });
+  } catch (error) {
+    console.error('[Orders] Error al consultar el pedido:', error.message);
+
+    return res.status(500).json({
+      error: 'No se pudo consultar el pedido.'
     });
   }
-
-  return res.status(200).json({ order });
 });
 
-module.exports = app;
+module.exports = { app, initializeDatabase };
