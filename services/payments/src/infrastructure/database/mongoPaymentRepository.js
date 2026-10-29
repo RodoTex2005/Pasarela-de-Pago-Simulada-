@@ -55,6 +55,12 @@ async function savePayment(payment) {
   return document;
 }
 
+async function getPaymentByOrderId(orderId) {
+  const collection = await connectToDatabase();
+
+  return collection.findOne({ orderId });
+}
+
 async function closeDatabaseConnection() {
   if (client) {
     await client.close();
@@ -66,5 +72,6 @@ async function closeDatabaseConnection() {
 
 module.exports = {
   savePayment,
+  getPaymentByOrderId,
   closeDatabaseConnection
 };
