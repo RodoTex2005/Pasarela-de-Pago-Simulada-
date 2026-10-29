@@ -18,11 +18,11 @@
 <a class="skip" href="#main">Saltar al contenido</a>
 
 <header class="top">
-  <span class="brand">Pasarela Demo</span>
+  <a class="brand" href="store.html">Pasarela Demo · Checkout</a><a href="store.html">Volver a la tienda</a>
   <button type="button" id="themeBtn" class="btn btn-ghost" aria-label="Cambiar tema">Tema: sistema</button>
 </header>
 
-<main id="main" class="layout">
+<main id="main" class="layout"><p id="authGuard" class="muted" hidden>Debes iniciar sesión para comprar. <a href="login.html?next=checkout">Iniciar sesión</a></p>
   <div>
     <h1>Finalizar compra</h1>
     <p class="muted">Entorno de pruebas: no se realiza ningún cobro real. Usa una tarjeta de prueba.</p>
@@ -90,16 +90,11 @@
 
   <aside class="summary" aria-labelledby="sum-title">
     <h2 id="sum-title">Resumen del pedido</h2>
-    <ul class="items">
+    <ul class="items" id="cartSummary">
       <li>
-        <svg role="img" aria-label="Audífonos inalámbricos negros con diadema" viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="8" fill="var(--surface-2)"/><path d="M10 28v-4a14 14 0 0 1 28 0v4" fill="none" stroke="var(--text)" stroke-width="3"/><rect x="8" y="27" width="8" height="12" rx="3" fill="var(--text)"/><rect x="32" y="27" width="8" height="12" rx="3" fill="var(--text)"/></svg>
-        <div><strong>Audífonos inalámbricos</strong><span class="muted">Cantidad: 1</span></div>
-        <span class="num">$1,199.00</span>
-      </li>
-      <li>
-        <svg role="img" aria-label="Cable USB-C trenzado enrollado" viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="8" fill="var(--surface-2)"/><circle cx="24" cy="24" r="12" fill="none" stroke="var(--text)" stroke-width="3"/><circle cx="24" cy="24" r="5" fill="none" stroke="var(--text)" stroke-width="3"/></svg>
-        <div><strong>Cable USB-C</strong><span class="muted">Cantidad: 1</span></div>
-        <span class="num">$149.00</span>
+        <svg role="img" aria-label="Laptop" viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="8" fill="var(--surface-2)"/><rect x="11" y="10" width="26" height="20" rx="2" fill="none" stroke="var(--text)" stroke-width="2.5"/><path d="M7 35h34l-3-5H10z" fill="var(--text)"/></svg>
+        <div><strong>Laptop</strong><span class="muted">Cantidad: 1</span></div>
+        <span class="num">$1,348.00</span>
       </li>
     </ul>
     <dl class="totals">
