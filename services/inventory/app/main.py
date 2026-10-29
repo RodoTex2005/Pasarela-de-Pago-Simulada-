@@ -89,6 +89,30 @@ def initialize_database():
                     ('mouse-001', 'Mouse', 250.00, 20, 0)
             """)
 
+            cursor.execute("""
+                INSERT IGNORE INTO products (id, name, price, stock, reserved)
+                VALUES
+                  ('audifonos-bt-001', 'Audífonos Bluetooth', 899.00, 18, 0),
+                  ('teclado-mec-001', 'Teclado mecánico RGB', 1299.00, 12, 0),
+                  ('monitor-24-001', 'Monitor Full HD 24 pulgadas', 2499.00, 8, 0),
+                  ('mousepad-xl-001', 'Mousepad XL', 349.00, 25, 0),
+                  ('webcam-hd-001', 'Webcam Full HD', 799.00, 14, 0),
+                  ('microfono-usb-001', 'Micrófono USB', 1199.00, 9, 0),
+                  ('silla-gamer-001', 'Silla gamer ergonómica', 3899.00, 5, 0),
+                  ('ssd-1tb-001', 'SSD NVMe 1 TB', 1799.00, 11, 0),
+                  ('ram-16gb-001', 'Memoria RAM 16 GB', 699.00, 20, 0),
+                  ('hub-usbc-001', 'Hub USB-C 7 en 1', 649.00, 16, 0),
+                  ('bocina-bt-001', 'Bocina Bluetooth portátil', 599.00, 22, 0),
+                  ('tablet-10-001', 'Tablet 10 pulgadas', 3299.00, 6, 0),
+                  ('cargador-65w-001', 'Cargador USB-C 65 W', 499.00, 24, 0),
+                  ('mochila-tech-001', 'Mochila para laptop', 749.00, 13, 0),
+                  ('soporte-laptop-001', 'Soporte ajustable para laptop', 429.00, 17, 0),
+                  ('control-usb-001', 'Control USB para PC', 899.00, 10, 0),
+                  ('impresora-001', 'Impresora multifuncional', 2199.00, 4, 0),
+                  ('router-wifi-001', 'Router Wi-Fi de doble banda', 1099.00, 7, 0)
+            """)
+
+
 
 @app.on_event("startup")
 def startup():

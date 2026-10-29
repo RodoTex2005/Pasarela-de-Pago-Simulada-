@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../src/app');
+const { app } = require('../../src/app');
 
 describe('Integración del servicio Orders', () => {
   test('GET /health debe indicar que el servicio está activo', async () => {
@@ -8,7 +8,8 @@ describe('Integración del servicio Orders', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       service: 'orders',
-      status: 'UP'
+      status: 'UP',
+      database: 'connected'
     });
   });
 

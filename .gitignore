@@ -25,3 +25,21 @@ Thumbs.db
 
 # Registros
 *.log
+
+# Resultados y reportes de Playwright
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/playwright/.cache/
+
+# Archivos y carpetas de respaldo locales
+.backup-*/
+*.backup
+*.backup-*
+
+# Resultados generados por Playwright
+playwright-report/
+test-results/
+# Playwright: dependencias y resultados generados
+tests/e2e/node_modules/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
